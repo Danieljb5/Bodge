@@ -1,0 +1,8 @@
+
+load_source(string file, size_t pos);
+parse(): string;
+
+main(int argc, char** argv)
+{
+
+}

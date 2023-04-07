@@ -1,0 +1,30 @@
+
+    // variable declaration
+    // statements need semicolons
+    int x = 4;
+    
+    // function calls
+    // print can accept any types similar to cout in c++
+    print("x's value is ", x, "\n");
+    
+    // group (struct) declaration
+    group s
+    {
+        int f;
+        const bool g;
+        
+        getF(): int
+        {
+            return f;
+            // same as 'return this.f;'
+        }
+        // does not need semicolon
+    }
+    
+    // no return type implies void
+    // return from main implies exit code 0
+    // for other exit codes, use exit(int)
+    main()
+    {
+        ...
+    }
