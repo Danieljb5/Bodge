@@ -15,11 +15,9 @@
         
         getF(): int
         {
-            return f;
-            // same as 'return this.f;'
+            return this.f;
         }
-        // does not need semicolon
-    }
+    }   // does not need semicolon
     
     // no return type implies void
     // return from main implies exit code 0
