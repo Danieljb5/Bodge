@@ -18,7 +18,7 @@ public namespace test
     }
 
     print(char* msg)
-    {
+    {   // using namespace 'c' just turns off name mangling
         c:puts(msg);
     }
 

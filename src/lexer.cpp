@@ -87,6 +87,8 @@ size_t line = 1, col = 1;
 uint64_t valid_patterns = PATTERN_RESET;
 Token lastMatch = T_INVALID;
 std::string srcFilename;
+bool inCommentBlock = false;
+bool inCommentSingle = false;
 
 bool flags[64] = {false};
 
@@ -104,6 +106,8 @@ void load_source(const std::string& file, const size_t& _pos)
     col = 1;
     valid_patterns = PATTERN_RESET;
     lastMatch = T_INVALID;
+    inCommentBlock = false;
+    inCommentSingle = false;
     
     srcFilename = file;
     std::ifstream in(file);
@@ -290,7 +294,7 @@ PATTERN_SYMS(commentLine, "//", COMMENT_LINE)
 PATTERN_SYMS(commentBlockOpen, "/*", COMMENT_BLOCK_OPEN)
 PATTERN_SYMS(commentBlockClose, "*/", COMMENT_BLOCK_CLOSE)
 
-Token lex()
+Token lex_()
 {
     reset_valid();
     while(isSpace(src[pos]))
@@ -298,6 +302,7 @@ Token lex()
         col++;
         if(src[pos] == '\n')
         {
+            inCommentSingle = false;
             line++;
             col = 1;
         }
@@ -307,6 +312,8 @@ Token lex()
     {
         str_ident = str_identCurr;
         str_identCurr = "EOF";
+        inCommentBlock = false;
+        inCommentSingle = false;
         return T_EOF;
     }
     startPos = pos;
@@ -322,6 +329,7 @@ Token lex()
                 col++;
                 if(src[pos] == '\n')
                 {
+                    inCommentSingle = false;
                     line++;
                     col = 1;
                 }
@@ -412,6 +420,7 @@ Token lex()
                 col++;
                 if(src[pos] == '\n')
                 {
+                    inCommentSingle = false;
                     line++;
                     col = 1;
                 }
@@ -432,6 +441,35 @@ Token lex()
         col++;
         count++;
     }
+}
+
+Token lex()
+{
+    Token tok = lex_();
+    if(tok == COMMENT_BLOCK_OPEN) inCommentBlock = true;
+    if(tok == COMMENT_BLOCK_CLOSE) inCommentBlock = false;
+    if(tok == COMMENT_LINE) inCommentSingle = true;
+
+    bool wasInCommentSingle = inCommentSingle;
+
+    if(inCommentBlock || inCommentSingle)
+    {
+        while(inCommentBlock || inCommentSingle)
+        {
+            if(tok == COMMENT_BLOCK_OPEN) inCommentBlock = true;
+            if(tok == COMMENT_BLOCK_CLOSE) inCommentBlock = false;
+            if(tok == COMMENT_LINE) inCommentSingle = true;
+            tok = lex_();
+            while(tok == T_INVALID)
+            {
+                pos++;
+                col++;
+                tok = lex_();
+            }
+        }
+        if(wasInCommentSingle) tok = lex();
+    }
+    return tok;
 }
 
 std::string get_id()

@@ -13,23 +13,6 @@ BackendGenerator* generator;
 void next()
 {
     tok = lex();
-    if(tok == COMMENT_BLOCK_OPEN)
-    {
-        while(tok != COMMENT_BLOCK_CLOSE)
-        {
-            tok = lex();
-        }
-        next();
-    }
-    if(tok == COMMENT_LINE)
-    {
-        size_t line = getLine();
-        while(getLine() == line)
-        {
-            tok = lex();
-        }
-        next();
-    }
     // std::cout << "[" << TokenNames[tok] << "]";
 }
 
