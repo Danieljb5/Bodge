@@ -90,6 +90,8 @@ struct BackendGenerator
 {
     std::pair<std::string, std::string> Finish()
     {
+        // TODO: process template requests
+
         std::pair<std::string, std::string> result = {"", ""};
         for(auto& str : output)
         {
@@ -351,6 +353,14 @@ struct BackendGenerator
     {
         return publicEnabled;
     }
+
+    std::string outSourceFileName = "";
+    std::string outHeaderFileName = "";
+
+    std::string outSourceBoilerplateBegin = "";
+    std::string outSourceBoilerplateEnd = "";
+    std::string outHeaderBoilerplateBegin = "";
+    std::string outHeaderBoilerplateEnd = "";
 
 protected:
     std::vector<std::pair<std::string, bool>> output;

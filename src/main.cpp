@@ -28,6 +28,11 @@ int main(int argc, char** argv)
     std::experimental::filesystem::create_directories(src_dir + "/out/src");
     std::experimental::filesystem::create_directories(src_dir + "/out/obj");
 
+    std::vector<BackendGenerator*> generators;
+    std::unordered_map<std::string, BackendGenerator*> templateGenerators;
+    std::unordered_map<std::string, size_t> templateOutLocations;
+    // std::unordered_map<std::string, TODO struct with template source info> templateSources;
+
     for(auto& f : std::experimental::filesystem::recursive_directory_iterator(src_dir))
     {
         if(f.path().extension() == ".b")
@@ -41,23 +46,40 @@ int main(int argc, char** argv)
             outFilename = outFilename.substr(0, pos);
 
             BackendGenerator* generator = new CBackendGenerator();
+            generators.push_back(generator);
             parse(generator);
 
-            std::ofstream out(src_dir + "/out/src/" + outFilename + ".c");
-            auto result = generator->Finish();
-            out << "#include \"" << outFilename << ".h\"\n" << result.first;
-            out.close();
+            generator->outSourceFileName = src_dir + "/out/src/" + outFilename + ".c";
+            generator->outHeaderFileName = src_dir + "/out/src/" + outFilename + ".h";
+            
+            generator->outSourceBoilerplateBegin = "#include \"" + outFilename + ".h\"\n";
 
-            out.open(src_dir + "/out/src/" + outFilename + ".h");
-            out << "#ifndef " << ToUpper("__" + outFilename + "_H")
-            << "\n#define " << ToUpper("__" + outFilename + "_H")
-            << "\n" << result.second
-            << "\n#endif //" << ToUpper("__" + outFilename + "_H");
-            out.close();
-
-            delete generator;
+            generator->outHeaderBoilerplateBegin = "#ifndef " + ToUpper("__" + outFilename + "_H") + "\n";
+            generator->outHeaderBoilerplateBegin += "#define " + ToUpper("__" + outFilename + "_H") + "\n";
+            generator->outHeaderBoilerplateEnd = "\n#endif // " + ToUpper("__" + outFilename + "_H");
         }
     }
+
+    for(auto& generator : generators)
+    {
+        auto result = generator->Finish();
+
+        std::ofstream out;
+        out.open(generator->outSourceFileName);
+        out << generator->outSourceBoilerplateBegin;
+        out << result.first;
+        out << generator->outSourceBoilerplateEnd;
+        out.close();
+
+        out.open(generator->outHeaderFileName);
+        out << generator->outHeaderBoilerplateBegin;
+        out << result.second;
+        out << generator->outHeaderBoilerplateEnd;
+        out.close();
+
+        delete generator;
+    }
+    generators.clear();
 
     for(auto& f : std::experimental::filesystem::recursive_directory_iterator(src_dir + "/out/src"))
     {

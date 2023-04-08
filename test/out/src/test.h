@@ -18,4 +18,4 @@ struct _4test_5Data2_
 
 };
 typedef struct _4test_5Data2_ _4test_5Data2;
-#endif //__TEST_H
+#endif // __TEST_H
