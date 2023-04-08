@@ -4,8 +4,8 @@
 #include <cassert>
 #include <string>
 
-#define PATTERN_RESET 0b11111111111111111111111111111111111
-#define NUM_PATTERNS 35
+#define PATTERN_RESET 0b1111111111111111111111111111111111111111111111111111111
+#define NUM_PATTERNS 55
 
 #define PATTERN_KEYWORD(KW, T) \
     void match_ ## KW () \
@@ -86,12 +86,26 @@ size_t count = 0;
 size_t line = 1, col = 1;
 uint64_t valid_patterns = PATTERN_RESET;
 Token lastMatch = T_INVALID;
+std::string srcFilename;
 
 bool flags[64] = {false};
 
 void load_source(const std::string& file, const size_t& _pos)
 {
-    // TODO:
+    startPos = 0;
+    prevPos = 0;
+    startLine = 1;
+    startCol = 1;
+    prevLine = 1;
+    prevCol = 1;
+    pos = 0;
+    count = 0;
+    line = 1;
+    col = 1;
+    valid_patterns = PATTERN_RESET;
+    lastMatch = T_INVALID;
+    
+    srcFilename = file;
     std::ifstream in(file);
     src = "";
     std::string line = "";
@@ -211,8 +225,11 @@ void match_string()
     lastMatch = STRING;
 }
 
+PATTERN_KEYWORD(using, USING)
+
 PATTERN_KEYWORD(if, IF)
 PATTERN_KEYWORD(while, WHILE)
+PATTERN_KEYWORD(else, ELSE)
 PATTERN_KEYWORD(break, BREAK)
 PATTERN_KEYWORD(continue, CONTINUE)
 PATTERN_KEYWORD(return, RETURN)
@@ -223,6 +240,11 @@ PATTERN_SYM(sub, -, SUB)
 PATTERN_SYM(mul, *, MUL)
 PATTERN_SYM(div, /, DIV)
 
+PATTERN_SYM(and, &, AND)
+PATTERN_SYM(or, |, OR)
+PATTERN_SYM(xor, ^, XOR)
+PATTERN_SYM(mod, %, MOD)
+
 PATTERN_SYM(addadd, ++, ADDADD)
 PATTERN_SYM(subsub, --, SUBSUB)
 
@@ -231,12 +253,19 @@ PATTERN_SYM(subequal, -=, SUBEQUAL)
 PATTERN_SYM(mulequal, *=, MULEQUAL)
 PATTERN_SYM(divequal, /=, DIVEQUAL)
 
+PATTERN_SYM(andequal, &=, ANDEQUAL)
+PATTERN_SYM(orequal, |=, OREQUAL)
+PATTERN_SYM(xorequal, ^=, XOREQUAL)
+PATTERN_SYM(modequal, %=, MODEQUAL)
+
 PATTERN_SYM(gt, >, GT)
 PATTERN_SYM(ge, >=, GE)
 PATTERN_SYM(lt, <, LT)
 PATTERN_SYM(le, <=, LE)
 PATTERN_SYM(eq, ==, EQ)
 PATTERN_SYM(neq, !=, NEQ)
+PATTERN_SYM(logand, &&, LOGAND)
+PATTERN_SYM(logor, ||, LOGOR)
 
 PATTERN_SYMS(open, "(", OPEN);
 PATTERN_SYMS(close, ")", CLOSE);
@@ -250,6 +279,16 @@ PATTERN_SYMS(comma, ",", COMMA)
 PATTERN_SYMS(colon, ":", COLON)
 PATTERN_SYMS(semicolon, ";", SEMICOLON)
 
+PATTERN_KEYWORD(namespace, NAMESPACE)
+PATTERN_KEYWORD(group, GROUP)
+PATTERN_KEYWORD(enum, ENUM)
+
+PATTERN_KEYWORD(public, PUBLIC)
+PATTERN_KEYWORD(private, PRIVATE)
+
+PATTERN_SYMS(commentLine, "//", COMMENT_LINE)
+PATTERN_SYMS(commentBlockOpen, "/*", COMMENT_BLOCK_OPEN)
+PATTERN_SYMS(commentBlockClose, "*/", COMMENT_BLOCK_CLOSE)
 
 Token lex()
 {
@@ -300,41 +339,61 @@ Token lex()
             return t;
         }
 
-        if(pattern_enabled(IDENTIFIER))     match_identifier();
-        if(pattern_enabled(NUMBER))         match_number();
-        if(pattern_enabled(STRING))         match_string();
-        if(pattern_enabled(IF))             match_if();
-        if(pattern_enabled(WHILE))          match_while();
-        if(pattern_enabled(BREAK))          match_break();
-        if(pattern_enabled(CONTINUE))       match_continue();
-        if(pattern_enabled(RETURN))         match_return();
-        if(pattern_enabled(ASSIGN))         match_assign();
-        if(pattern_enabled(ADD))            match_add();
-        if(pattern_enabled(SUB))            match_sub();
-        if(pattern_enabled(MUL))            match_mul();
-        if(pattern_enabled(DIV))            match_div();
-        if(pattern_enabled(ADDADD))         match_addadd();
-        if(pattern_enabled(SUBSUB))         match_subsub();
-        if(pattern_enabled(ADDEQUAL))       match_addequal();
-        if(pattern_enabled(SUBEQUAL))       match_subequal();
-        if(pattern_enabled(MULEQUAL))       match_mulequal();
-        if(pattern_enabled(DIVEQUAL))       match_divequal();
-        if(pattern_enabled(GT))             match_gt();
-        if(pattern_enabled(GE))             match_ge();
-        if(pattern_enabled(LT))             match_lt();
-        if(pattern_enabled(LE))             match_le();
-        if(pattern_enabled(EQ))             match_eq();
-        if(pattern_enabled(NEQ))            match_neq();
-        if(pattern_enabled(OPEN))           match_open();
-        if(pattern_enabled(CLOSE))          match_close();
-        if(pattern_enabled(OPENB))          match_openb();
-        if(pattern_enabled(CLOSEB))         match_closeb();
-        if(pattern_enabled(OPENSQ))         match_opensq();
-        if(pattern_enabled(CLOSESQ))        match_closesq();
-        if(pattern_enabled(DOT))            match_dot();
-        if(pattern_enabled(COMMA))          match_comma();
-        if(pattern_enabled(COLON))          match_colon();
-        if(pattern_enabled(SEMICOLON))      match_semicolon();
+        if(pattern_enabled(IDENTIFIER))             match_identifier();
+        if(pattern_enabled(NUMBER))                 match_number();
+        if(pattern_enabled(STRING))                 match_string();
+        if(pattern_enabled(USING))                  match_using();
+        if(pattern_enabled(IF))                     match_if();
+        if(pattern_enabled(WHILE))                  match_while();
+        if(pattern_enabled(ELSE))                   match_else();
+        if(pattern_enabled(BREAK))                  match_break();
+        if(pattern_enabled(CONTINUE))               match_continue();
+        if(pattern_enabled(RETURN))                 match_return();
+        if(pattern_enabled(ASSIGN))                 match_assign();
+        if(pattern_enabled(ADD))                    match_add();
+        if(pattern_enabled(SUB))                    match_sub();
+        if(pattern_enabled(MUL))                    match_mul();
+        if(pattern_enabled(DIV))                    match_div();
+        if(pattern_enabled(AND))                    match_and();
+        if(pattern_enabled(OR))                     match_or();
+        if(pattern_enabled(XOR))                    match_xor();
+        if(pattern_enabled(MOD))                    match_mod();
+        if(pattern_enabled(ADDADD))                 match_addadd();
+        if(pattern_enabled(SUBSUB))                 match_subsub();
+        if(pattern_enabled(ADDEQUAL))               match_addequal();
+        if(pattern_enabled(SUBEQUAL))               match_subequal();
+        if(pattern_enabled(MULEQUAL))               match_mulequal();
+        if(pattern_enabled(DIVEQUAL))               match_divequal();
+        if(pattern_enabled(ANDEQUAL))               match_andequal();
+        if(pattern_enabled(OREQUAL))                match_orequal();
+        if(pattern_enabled(XOREQUAL))               match_xorequal();
+        if(pattern_enabled(MODEQUAL))               match_modequal();
+        if(pattern_enabled(GT))                     match_gt();
+        if(pattern_enabled(GE))                     match_ge();
+        if(pattern_enabled(LT))                     match_lt();
+        if(pattern_enabled(LE))                     match_le();
+        if(pattern_enabled(EQ))                     match_eq();
+        if(pattern_enabled(NEQ))                    match_neq();
+        if(pattern_enabled(LOGAND))                 match_logand();
+        if(pattern_enabled(LOGOR))                  match_logor();
+        if(pattern_enabled(OPEN))                   match_open();
+        if(pattern_enabled(CLOSE))                  match_close();
+        if(pattern_enabled(OPENB))                  match_openb();
+        if(pattern_enabled(CLOSEB))                 match_closeb();
+        if(pattern_enabled(OPENSQ))                 match_opensq();
+        if(pattern_enabled(CLOSESQ))                match_closesq();
+        if(pattern_enabled(DOT))                    match_dot();
+        if(pattern_enabled(COMMA))                  match_comma();
+        if(pattern_enabled(COLON))                  match_colon();
+        if(pattern_enabled(SEMICOLON))              match_semicolon();
+        if(pattern_enabled(NAMESPACE))              match_namespace();
+        if(pattern_enabled(GROUP))                  match_group();
+        if(pattern_enabled(ENUM))                   match_enum();
+        if(pattern_enabled(PUBLIC))                 match_public();
+        if(pattern_enabled(PRIVATE))                match_private();
+        if(pattern_enabled(COMMENT_LINE))           match_commentLine();
+        if(pattern_enabled(COMMENT_BLOCK_OPEN))     match_commentBlockOpen();
+        if(pattern_enabled(COMMENT_BLOCK_CLOSE))    match_commentBlockClose();
 
         // std::cout << "(";
         // for(uint64_t i = NUM_PATTERNS - 1; i < NUM_PATTERNS; i--)
@@ -382,5 +441,10 @@ std::string get_id()
 
 void error(const std::string& msg)
 {
-    std::cerr << msg << " at line " << prevLine << ", column " << prevCol << "\n";
+    std::cerr << srcFilename << ": " << msg << " at line " << prevLine << ", column " << prevCol << "\n";
+}
+
+size_t getLine()
+{
+    return line;
 }

@@ -1,0 +1,2 @@
+make
+./bodge test main

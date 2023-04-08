@@ -1,0 +1,44 @@
+<!-- - 'group' version of block() in parser (for group members, does not support namespaces and subgroups) -->
+<!-- - global variables (as well as member variables) -->
+<!-- - function scopes
+    - variable declaration
+    - variable assignments
+    - arithmetic operations
+    - keywords (if, while, etc.)
+    - function calls
+        - add function calls to value()
+    - support for C-functions
+        - example:
+            c.printf("Hello, world!"); -->
+<!-- - object-oriented features (automatic insersion of 'this' parameter in member functions) -->
+<!-- - enums -->
+<!-- - header generation from source -->
+<!-- - include system
+    - include C headers
+    - include native source (using generated C headers) -->
+<!-- - comments -->
+- compile steps
+    <!-- - compile all files recursively under a directory -->
+    - (future) process template queues
+    <!-- - compile all generated source files using gcc -->
+    <!-- - link generated object files using gcc -->
+- template system
+    - process all files, keep output lists in a buffer
+    - when a template definition is encountered, save it to a buffer, with a pointer to the relevant output buffer
+    - when a file needs a template for a specific type not already encountered for that definition, add a request to the template definition buffer for that template
+    - when all sources are finished, process the template requests (adding new code to the output buffers where the original template definition was), creating implementations of the templates
+    - only supports basic copy-paste system
+    - format example:
+        template <T>
+        group myGroup
+        {
+            T dataType;
+            getData(): T;
+        }
+    - another format example
+        template <T, U>
+        cast(U var): T
+        {
+            return T(var);
+        }
+- variadic functions (automatically insert parameter count into functions)
