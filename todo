@@ -41,4 +41,5 @@
         {
             return T(var);
         }
+- thread-safe locked types (automatically inserts mutex locks around accesses)
 - variadic functions (automatically insert parameter count into functions)

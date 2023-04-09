@@ -37,8 +37,8 @@ struct CBackendGenerator : public BackendGenerator
     void PushNamespaceStack(const std::string& name, bool isStruct = false) override;
     void PopNamespaceStack() override;
 
-    std::string Mangle(const std::string& name, const std::vector<Type>& types = {}) override;
-    std::string Mangle(const std::string& name, const std::vector<Value>& types) override;
+    std::string Mangle(const std::string& name, const std::vector<Type>& types = {}, bool isVar = false) override;
+    std::string Mangle(const std::string& name, const std::vector<Value>& types, bool isVar = false) override;
 
 private:
     size_t lastMemberIndex = 0;

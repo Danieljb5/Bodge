@@ -110,6 +110,16 @@ std::vector<Type> callArgs()
 Type value(bool inScope = false)
 {
     Type type_(Type::VoidID);
+    size_t ref_count = 0;
+    while(accept(AND))
+    {
+        ref_count++;
+    }
+    size_t deref_count = 0;
+    while(accept(MUL))
+    {
+        deref_count++;
+    }
     if(accept(IDENTIFIER))
     {
         auto names = namespaces(get_id());
@@ -129,18 +139,9 @@ Type value(bool inScope = false)
             auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
             generator->GenerateString(name_, inScope);
             auto tpe = generator->GetType(name_);
-            if(accept(OPENSQ))
-            {
-                generator->GenerateString("[", inScope);
-                arithexpr();
-                type_ = generator->Promote(type_, generator->Dereference(tpe));
-                generator->GenerateString("]", inScope);
-                expect(CLOSESQ, "array operator");
-            }
-            else
-            {
-                type_ = generator->Promote(type_, tpe);
-            }
+            for(size_t i = 0; i < ref_count; i++) tpe = generator->Reference(tpe);
+            for(size_t i = 0; i < deref_count; i++) tpe = generator->Dereference(tpe);
+            type_ = generator->Promote(type_, tpe);
         }
     }
     else if(accept(NUMBER))
@@ -183,7 +184,15 @@ Type addsub(bool inScope = false)
 
 Type muldiv(bool inScope = false)
 {
+    bool deref = false;
+    if(tok == MUL)
+    {
+        deref = true;
+        generator->GenerateString("*", inScope);
+        next();
+    }
     auto type_ = addsub(inScope);
+    if(deref) type_ = generator->Dereference(type_);
     while(tok == MUL || tok == DIV || tok == MOD)
     {
         if(tok == MUL) generator->GenerateString("*", inScope);
@@ -197,7 +206,15 @@ Type muldiv(bool inScope = false)
 
 Type arithexpr(bool inScope)
 {
+    bool ref = false;
+    if(tok == AND)
+    {
+        ref = true;
+        generator->GenerateString("&", inScope);
+        next();
+    }
     auto type_ = muldiv(inScope);
+    if(ref) type_ = generator->Reference(type_);
     while(tok == AND || tok == OR || tok == XOR)
     {
         if(tok == AND) generator->GenerateString("&", inScope);
@@ -314,6 +331,16 @@ void scope()
 {
     while(true)
     {
+        size_t ref_count = 0;
+        while(accept(AND))
+        {
+            ref_count++;
+        }
+        size_t deref_count = 0;
+        while(accept(MUL))
+        {
+            deref_count++;
+        }
         if(tok == IDENTIFIER)
         {
             auto names = namespaces();
@@ -331,6 +358,8 @@ void scope()
             else if(accept(ASSIGN))
             {   // variable assignment
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_);
                 if(accept(STRING))
                 {
@@ -346,6 +375,8 @@ void scope()
             else if(accept(ADDEQUAL))
             {   // variable assignment
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "+=");
                 if(accept(STRING))
                 {
@@ -361,6 +392,8 @@ void scope()
             else if(accept(SUBEQUAL))
             {   // variable assignment
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "-=");
                 if(accept(STRING))
                 {
@@ -376,6 +409,8 @@ void scope()
             else if(accept(MULEQUAL))
             {   // variable assignment
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "*=");
                 if(accept(STRING))
                 {
@@ -391,6 +426,8 @@ void scope()
             else if(accept(DIVEQUAL))
             {   // variable assignment
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "/=");
                 if(accept(STRING))
                 {
@@ -406,6 +443,8 @@ void scope()
             else if(accept(ADDADD))
             {   // variable assignment
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "++");
                 expect(SEMICOLON, "variable assignment");
                 generator->GenerateLineEnd(true);
@@ -413,6 +452,8 @@ void scope()
             else if(accept(SUBSUB))
             {   // variable assignment
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "--");
                 expect(SEMICOLON, "variable assignment");
                 generator->GenerateLineEnd(true);
@@ -420,6 +461,8 @@ void scope()
             else if(accept(ANDEQUAL))
             {
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "&=");
                 if(accept(STRING))
                 {
@@ -435,6 +478,8 @@ void scope()
             else if(accept(OREQUAL))
             {
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "|=");
                 if(accept(STRING))
                 {
@@ -450,6 +495,8 @@ void scope()
             else if(accept(XOREQUAL))
             {
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "^=");
                 if(accept(STRING))
                 {
@@ -465,6 +512,8 @@ void scope()
             else if(accept(MODEQUAL))
             {
                 auto name_ = generator->GenerateMangledFunction(names, name, {}, true);
+                for(size_t i = 0; i < ref_count; i++) name_ = "&" + name_;
+                for(size_t i = 0; i < deref_count; i++) name_ = name_ = "*" + name;
                 generator->GenerateScopedVariableAssignment(name_, "%=");
                 if(accept(STRING))
                 {

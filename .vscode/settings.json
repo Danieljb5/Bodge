@@ -64,6 +64,7 @@
         "cinttypes": "cpp",
         "semaphore": "cpp",
         "unordered_set": "cpp",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "main.h": "c"
     }
 }

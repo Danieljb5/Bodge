@@ -1,5 +1,6 @@
 #ifndef __TEST_H
 #define __TEST_H
+#include "stdbool.h"
 
 signed int _4test_3add_n_n(signed int a, signed int b);
 signed int _4test_3and_n_n(signed int a, signed int b);

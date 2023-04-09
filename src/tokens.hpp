@@ -16,7 +16,7 @@ enum Token
     OPEN, CLOSE, OPENB, CLOSEB, OPENSQ, CLOSESQ,
     DOT, COMMA, COLON, SEMICOLON,
     NAMESPACE, GROUP, ENUM,
-    PUBLIC, PRIVATE,
+    PUBLIC, PRIVATE, TEMPLATE,
     COMMENT_LINE, COMMENT_BLOCK_OPEN, COMMENT_BLOCK_CLOSE,
     T_EOF, // The value of T_EOF is equal to the total number of tokens
     T_INVALID,
@@ -36,7 +36,7 @@ static std::string TokenNames[]
     "(", ")", "{", "}", "[", "]",
     ".", ",", ":", ";",
     "namespace", "group", "enum",
-    "public", "private",
+    "public", "private", "template",
     "//", "/*", "*/",
     "EOF",
     "Invalid",

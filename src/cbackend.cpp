@@ -313,6 +313,7 @@ void CBackendGenerator::GenerateFunctionCall(const std::vector<Type>& values, st
         args = args_ + args;
         namespaces.back().first = GetType(namespaces.back().first).structName;
         mangledName = GenerateMangledFunction(namespaces, funcNameCache, values);
+        namespaceName = GenerateMangledNamespace(namespaces);
     }
     output.pop_back();
 
@@ -415,25 +416,41 @@ void CBackendGenerator::PopNamespaceStack()
 }
 
 
-std::string CBackendGenerator::Mangle(const std::string& name, const std::vector<Type>& types)
+std::string CBackendGenerator::Mangle(const std::string& name, const std::vector<Type>& types, bool isVar)
 {
     std::string result = "";
     bool isMember = false;
-    for(auto& ns : namespaceStack)
+    for(size_t i = 0; i < namespaceStack.size(); i++)
     {
-        if(ns.second)
+        auto& ns = namespaceStack[i];
+        if(ns.first == "") continue;
+        if(ns.second && isVar)
         {
             isMember = true;
             result += ns.first + ".";
         }
         else
         {
-            result += std::to_string(ns.first.length());
-            result += ns.first;
-            result += "_";
+            if(ns.first[0] == '_' && isDigit(ns.first[1]))
+            {   // already mangled
+                result += ns.first;
+            }
+            else
+            {
+                result += std::to_string(ns.first.length());
+                result += ns.first;
+                if(i + 1 < namespaceStack.size())
+                {
+                    auto& ns2 = namespaceStack[i + 1];
+                    if(ns2.first[0] != '_' && !isDigit(ns2.first[1]))
+                    {
+                        result += "_";
+                    }
+                }
+            }
         }
     }
-    if(!isMember) result += std::to_string(name.length());
+    if(!isMember) result += "_" + std::to_string(name.length());
     result += name;
     for(auto& t : types)
     {
@@ -441,16 +458,17 @@ std::string CBackendGenerator::Mangle(const std::string& name, const std::vector
         result += MangleType(t);
     }
     if(isMember) return result;
+    if(namespaceStack.front().first[0] == '_' && isDigit(namespaceStack.front().first[1])) return result;
     return "_" + result;
 }
 
-std::string CBackendGenerator::Mangle(const std::string& name, const std::vector<Value>& types)
+std::string CBackendGenerator::Mangle(const std::string& name, const std::vector<Value>& types, bool isVar)
 {
     std::string result = "";
     bool isMember = false;
     for(auto& ns : namespaceStack)
     {
-        if(ns.second)
+        if(ns.second && isVar)
         {
             isMember = true;
             result += ns.first + ".";

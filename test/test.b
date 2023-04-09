@@ -1,4 +1,5 @@
 using "stdio.h"
+using "stdlib.h"
 
 public namespace test
 {
@@ -31,5 +32,32 @@ public namespace test
     group Data2
     {
         test:Data d;
+    }
+
+    template <T>
+    group DynamicArray
+    {
+        T* array;
+        u64_t size;
+        u64_t reserved;
+
+        init()
+        {
+            this.size = 0;
+            this.reserved = 8;
+            this.array = c:malloc(this.reserved * c:sizeof(T));
+        }
+
+        push_back(T elem)
+        {
+            if(this.size == this.reserved)
+            {
+                this.reserved = (this.reserved * 3) / 2 + 8;
+                this.array = c:realloc(this.array, this.reserved * c:sizeof(T));
+            }
+            T* arrayElem = this.array + (this.size * c:sizeof(T));
+            *arrayElem = elem;
+            this.size++;
+        }
     }
 }

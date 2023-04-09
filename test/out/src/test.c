@@ -1,6 +1,7 @@
 #include "test.h"
 
 #include "stdio.h"
+#include "stdlib.h"
 signed int _4test_3add_n_n(signed int a, signed int b)
 {
     return a+b;

@@ -4,8 +4,8 @@
 #include <cassert>
 #include <string>
 
-#define PATTERN_RESET 0b1111111111111111111111111111111111111111111111111111111
-#define NUM_PATTERNS 55
+#define PATTERN_RESET 0b11111111111111111111111111111111111111111111111111111111
+#define NUM_PATTERNS 56
 
 #define PATTERN_KEYWORD(KW, T) \
     void match_ ## KW () \
@@ -289,6 +289,7 @@ PATTERN_KEYWORD(enum, ENUM)
 
 PATTERN_KEYWORD(public, PUBLIC)
 PATTERN_KEYWORD(private, PRIVATE)
+PATTERN_KEYWORD(template, TEMPLATE)
 
 PATTERN_SYMS(commentLine, "//", COMMENT_LINE)
 PATTERN_SYMS(commentBlockOpen, "/*", COMMENT_BLOCK_OPEN)
@@ -399,6 +400,7 @@ Token lex_()
         if(pattern_enabled(ENUM))                   match_enum();
         if(pattern_enabled(PUBLIC))                 match_public();
         if(pattern_enabled(PRIVATE))                match_private();
+        if(pattern_enabled(TEMPLATE))               match_template();
         if(pattern_enabled(COMMENT_LINE))           match_commentLine();
         if(pattern_enabled(COMMENT_BLOCK_OPEN))     match_commentBlockOpen();
         if(pattern_enabled(COMMENT_BLOCK_CLOSE))    match_commentBlockClose();

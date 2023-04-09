@@ -31,7 +31,8 @@ int main(int argc, char** argv)
     std::vector<BackendGenerator*> generators;
     std::unordered_map<std::string, BackendGenerator*> templateGenerators;
     std::unordered_map<std::string, size_t> templateOutLocations;
-    // std::unordered_map<std::string, TODO struct with template source info> templateSources;
+    std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> templateOutputs;
+    std::unordered_map<std::string, TemplateSource> templateSources;
 
     for(auto& f : std::experimental::filesystem::recursive_directory_iterator(src_dir))
     {
@@ -56,6 +57,7 @@ int main(int argc, char** argv)
 
             generator->outHeaderBoilerplateBegin = "#ifndef " + ToUpper("__" + outFilename + "_H") + "\n";
             generator->outHeaderBoilerplateBegin += "#define " + ToUpper("__" + outFilename + "_H") + "\n";
+            generator->outHeaderBoilerplateBegin += "#include \"stdbool.h\"\n";
             generator->outHeaderBoilerplateEnd = "\n#endif // " + ToUpper("__" + outFilename + "_H");
         }
     }

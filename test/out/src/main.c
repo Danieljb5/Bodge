@@ -1,6 +1,5 @@
 #include "main.h"
 
-#include "test.h"
 signed int main(signed int argc, unsigned char** argv)
 {
     if(argc<=2)
